@@ -1,12 +1,12 @@
 import Product from "../models/productModel.js";
-import Category from "../models/categoryModel.js"; 
-import asyncWrapper from '../middlewares/asyncWrapper.js';
-import httpStatus from '../utils/httpStatus.js';
-import appError from '../utils/appError.js';
+import Category from "../models/categoryModel.js";
+import asyncWrapper from "../middlewares/asyncWrapper.js";
+import httpStatus from "../utils/httpStatus.js";
+import appError from "../utils/appError.js";
 
 export const getAllProducts = asyncWrapper(async (req, res) => {
   const products = await Product.find().populate("category", "-_id name");
-  res.status(200).json({ status: httpStatus.SUCCESS , data: { products } });
+  res.status(200).json({ status: httpStatus.SUCCESS, data: { products } });
 });
 
 export const getProductById = asyncWrapper(async (req, res) => {
@@ -21,10 +21,23 @@ export const getProductById = asyncWrapper(async (req, res) => {
 });
 
 export const createProduct = asyncWrapper(async (req, res) => {
-  const { name, description, price, discount, stock, category, images } = req.body;
+  const { name, description, price, discount, stock, category, images } =
+    req.body;
 
-  if (!name ||!description ||price === undefined ||stock === undefined ||!category) {
-    return next(appError.create("Name, description, price, stock, and category are required fields", 400, httpStatus.ERROR));
+  if (
+    !name ||
+    !description ||
+    price === undefined ||
+    stock === undefined ||
+    !category
+  ) {
+    return next(
+      appError.create(
+        "Name, description, price, stock, and category are required fields",
+        400,
+        httpStatus.ERROR,
+      ),
+    );
   }
 
   const ctgory = await Category.findById(category);
@@ -47,15 +60,19 @@ export const createProduct = asyncWrapper(async (req, res) => {
 });
 
 export const updateProduct = asyncWrapper(async (req, res) => {
-    const { id } = req.params;
+  const { id } = req.params;
 
-    const updatedProduct = await Product.findByIdAndUpdate(id, req.body, { returnDocument: "after" });
+  const updatedProduct = await Product.findByIdAndUpdate(id, req.body, {
+    returnDocument: "after",
+  });
 
-    if (!updatedProduct) {
-        return next(appError.create("Product not found", 404, httpStatus.ERROR));
-    }
+  if (!updatedProduct) {
+    return next(appError.create("Product not found", 404, httpStatus.ERROR));
+  }
 
-    res.status(200).json({ status: httpStatus.SUCCESS, data: { updatedProduct } });
+  res
+    .status(200)
+    .json({ status: httpStatus.SUCCESS, data: { updatedProduct } });
 });
 
 export const deleteProduct = asyncWrapper(async (req, res) => {
@@ -67,6 +84,8 @@ export const deleteProduct = asyncWrapper(async (req, res) => {
     return next(appError.create("Product not found", 404, httpStatus.ERROR));
   }
 
-  res.status(200).json({ status: httpStatus.SUCCESS, message: "Product deleted successfully" });
+  res.status(200).json({
+    status: httpStatus.SUCCESS,
+    message: "Product deleted successfully",
+  });
 });
-
