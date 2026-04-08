@@ -7,6 +7,7 @@ import authRoute from "./routes/authRoute.js";
 import userRoute from "./routes/userRoute.js";
 import httpStatus from "./utils/httpStatus.js";
 import cartRouter from "./routes/cartRoute.js";
+import orderRouter from "./routes/orderRoute.js";
 
 dotenv.config();
 connectDB();
@@ -18,6 +19,7 @@ app.use("/products", productRoute);
 app.use("/authentication", authRoute);
 app.use("/user", userRoute);
 app.use("/cart", cartRouter);
+app.use("/order", orderRouter);
 
 app.use((req, res, next) => {
   return res.status(404).json({
