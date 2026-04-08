@@ -36,7 +36,14 @@ export const addOrder = async (req, res, next) => {
 
 //Get All Orders
 export const getAllOrders = async (req, res, next) => {
-  const orders = await Order.find();
+  const orders = await Order.find().populate({
+    path: "cartId",
+    select: "products",
+    populate: {
+      path: "products.productId",
+      select: "name",
+    },
+  });
   if (!orders.length) {
     const error = appError.create("No Orders found.", 404, httpStatus.ERROR);
     return next(error);
@@ -57,7 +64,14 @@ export const getOrderById = async (req, res, next) => {
     );
     return next(error);
   }
-  const orderExist = await Order.findById(id);
+  const orderExist = await Order.findById(id).populate({
+    path: "cartId",
+    select: "-_id products",
+    populate: {
+      path: "products.productId",
+      select: "name",
+    },
+  });
   if (!orderExist) {
     const error = appError.create("Order not found.", 404, httpStatus.ERROR);
     return next(error);
@@ -78,7 +92,14 @@ export const getOrdersByUser = async (req, res, next) => {
     );
     return next(error);
   }
-  const userOrders = await Order.find({ userId: userid });
+  const userOrders = await Order.find({ userId: userid }).populate({
+    path: "cartId",
+    select: "products",
+    populate: {
+      path: "products.productId",
+      select: "name",
+    },
+  });
   if (!userOrders.length) {
     const error = appError.create(
       "No Orders found for this user",
