@@ -8,18 +8,28 @@ import userRoute from "./routes/userRoute.js";
 import httpStatus from "./utils/httpStatus.js";
 import cartRouter from "./routes/cartRoute.js";
 import orderRouter from "./routes/orderRoute.js";
+import paymentRoute from "./routes/paymentRoute.js";
+import cors from "cors";
+
+const app = express();
+
+
+app.use(cors({
+  origin: 'http://localhost:4200'
+}))
 
 dotenv.config();
 connectDB();
-const app = express();
 
+app.use(cors());
 app.use(express.json());
-app.use("/category", categoryRoute);
-app.use("/products", productRoute);
-app.use("/authentication", authRoute);
-app.use("/user", userRoute);
-app.use("/cart", cartRouter);
-app.use("/order", orderRouter);
+app.use("/api/category", categoryRoute);
+app.use("/api/products", productRoute);
+app.use("/api/authentication", authRoute);
+app.use("/api/user", userRoute);
+app.use("/api/cart", cartRouter);
+app.use("/api/order", orderRouter);
+app.use("/payment", paymentRoute);
 
 app.use((req, res, next) => {
   return res.status(404).json({
