@@ -11,17 +11,16 @@ import orderRouter from "./routes/orderRoute.js";
 import paymentRoute from "./routes/paymentRoute.js";
 import cors from "cors";
 
-const app = express();
+dotenv.config();
 
+const app = express();
 
 app.use(cors({
   origin: 'http://localhost:4200'
 }))
 
-dotenv.config();
 connectDB();
 
-app.use(cors());
 app.use(express.json());
 app.use("/api/category", categoryRoute);
 app.use("/api/products", productRoute);
