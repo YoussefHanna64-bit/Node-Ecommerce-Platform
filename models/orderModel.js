@@ -34,6 +34,10 @@ const orderSchema = new Schema(
         },
       },
     ],
+    address: {
+      type: String,
+      required: true,
+    },
     totalPrice: {
       type: Number,
       required: true,
@@ -44,7 +48,7 @@ const orderSchema = new Schema(
       default: "cash",
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 const Order = mongoose.model("Order", orderSchema);

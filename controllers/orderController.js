@@ -41,7 +41,7 @@ export const addOrder = async (req, res, next) => {
       const updatedProduct = await Product.findOneAndUpdate(
         { _id: item.productId, stock: { $gte: item.quantity } },
         { $inc: { stock: -item.quantity } },
-        { new: true },
+        { returnDocument: "after" },
       );
 
       if (!updatedProduct) {
