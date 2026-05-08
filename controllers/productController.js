@@ -5,13 +5,21 @@ import httpStatus from "../utils/httpStatus.js";
 import appError from "../utils/appError.js";
 
 export const getAllProducts = asyncWrapper(async (req, res) => {
-  const products = await Product.find().populate("category", "-_id name");
+  const products = await Product.find().populate({
+    path: "category",
+    select: "-_id title",
+    transform: (doc) => (doc ? doc.title : null),
+  });
   res.status(200).json({ status: httpStatus.SUCCESS, data: { products } });
 });
 
 export const getProductById = asyncWrapper(async (req, res) => {
   const { id } = req.params;
-  const product = await Product.findById(id).populate("category", "-_id name");
+  const product = await Product.findById(id).populate({
+    path: "category",
+    select: "-_id title",
+    transform: (doc) => (doc ? doc.title : null),
+  });
 
   if (!product) {
     return next(appError.create("Product not found", 404, httpStatus.ERROR));
