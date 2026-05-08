@@ -5,31 +5,39 @@ import appError from "../utils/appError.js";
 
 //Add Order
 export const addOrder = async (req, res, next) => {
-  const { userId, cartId, paymentMethod } = req.body;
-  if (!userId || !cartId) {
+  const { userId, paymentMethod } = req.body;
+  if (!userId) {
     const error = appError.create(
       "Missing required fields.",
       400,
-      httpStatus.ERROR
+      httpStatus.ERROR,
     );
     return next(error);
   }
-  const cartExist = await cartModel.findById(cartId);
+  const cartExist = await cartModel.findOne({ userId });
   if (!cartExist) {
     const error = appError.create("Cart not found.", 404, httpStatus.ERROR);
     return next(error);
   }
-  const totalPrice = cartExist.products
-    .map((item) => item.price * item.quantity)
-    .reduce((acc, curr) => acc + curr, 0);
+  const subtotal = cartExist.products.reduce(
+    (acc, item) => acc + item.price * item.quantity,
+    0,
+  );
+  const totalPrice = Number((subtotal * 1.14).toFixed(2));
+
   const data = await Order.create({
     userId,
-    cartId,
+    cartId: cartExist._id,
     totalPrice,
     paymentMethod,
   });
+
+  cartExist.products = [];
+  cartExist.totalPrice = 0;
+  await cartExist.save();
+
   return res.status(201).json({
-    message: "Oder created successfully",
+    message: "Order created successfully",
     data,
   });
 };
@@ -60,7 +68,7 @@ export const getOrderById = async (req, res, next) => {
     const error = appError.create(
       "Order ID is required.",
       400,
-      httpStatus.ERROR
+      httpStatus.ERROR,
     );
     return next(error);
   }
@@ -88,7 +96,7 @@ export const getOrdersByUser = async (req, res, next) => {
     const error = appError.create(
       "User ID is required.",
       400,
-      httpStatus.ERROR
+      httpStatus.ERROR,
     );
     return next(error);
   }
@@ -104,7 +112,7 @@ export const getOrdersByUser = async (req, res, next) => {
     const error = appError.create(
       "No Orders found for this user",
       404,
-      httpStatus.ERROR
+      httpStatus.ERROR,
     );
     return next(error);
   }
@@ -120,7 +128,7 @@ export const deleteOrder = async (req, res, next) => {
     const error = appError.create(
       "Order ID is required.",
       400,
-      httpStatus.ERROR
+      httpStatus.ERROR,
     );
     return next(error);
   }
