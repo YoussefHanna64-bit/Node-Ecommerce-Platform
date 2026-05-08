@@ -12,6 +12,28 @@ const orderSchema = new Schema(
       ref: "cart",
       required: true,
     },
+    products: [
+      {
+        productId: {
+          type: Schema.Types.ObjectId,
+          ref: "Product",
+          required: true,
+        },
+        quantity: {
+          type: Number,
+          required: true,
+          min: [1, "quantity must be at least 1"],
+        },
+        price: {
+          type: Number,
+          required: true,
+        },
+        images: {
+          type: [String],
+          default: [],
+        },
+      },
+    ],
     totalPrice: {
       type: Number,
       required: true,

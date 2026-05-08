@@ -1,11 +1,12 @@
 import Order from "../models/orderModel.js";
 import cartModel from "../models/cartModel.js";
+import Product from "../models/productModel.js";
 import httpStatus from "../utils/httpStatus.js";
 import appError from "../utils/appError.js";
 
 //Add Order
 export const addOrder = async (req, res, next) => {
-  const { userId, paymentMethod } = req.body;
+  const { userId, address, paymentMethod } = req.body;
   if (!userId) {
     const error = appError.create(
       "Missing required fields.",
@@ -14,7 +15,9 @@ export const addOrder = async (req, res, next) => {
     );
     return next(error);
   }
-  const cartExist = await cartModel.findOne({ userId });
+  const cartExist = await cartModel
+    .findOne({ userId })
+    .populate("products.productId", "images");
   if (!cartExist) {
     const error = appError.create("Cart not found.", 404, httpStatus.ERROR);
     return next(error);
@@ -24,33 +27,72 @@ export const addOrder = async (req, res, next) => {
     0,
   );
   const totalPrice = Number((subtotal * 1.14).toFixed(2));
+  const productsSnapshot = cartExist.products.map((item) => ({
+    productId: item.productId,
+    quantity: item.quantity,
+    price: item.price,
+    images: item.productId.images ?? [],
+  }));
 
-  const data = await Order.create({
-    userId,
-    cartId: cartExist._id,
-    totalPrice,
-    paymentMethod,
-  });
+  const decrementedProducts = [];
 
-  cartExist.products = [];
-  cartExist.totalPrice = 0;
-  await cartExist.save();
+  try {
+    for (const item of cartExist.products) {
+      const updatedProduct = await Product.findOneAndUpdate(
+        { _id: item.productId, stock: { $gte: item.quantity } },
+        { $inc: { stock: -item.quantity } },
+        { new: true },
+      );
 
-  return res.status(201).json({
-    message: "Order created successfully",
-    data,
-  });
+      if (!updatedProduct) {
+        const error = appError.create(
+          "Not enough stock available for one or more products.",
+          400,
+          httpStatus.FAIL,
+        );
+        throw error;
+      }
+
+      decrementedProducts.push(item);
+    }
+
+    const data = await Order.create({
+      userId,
+      cartId: cartExist._id,
+      address,
+      products: productsSnapshot,
+      totalPrice,
+      paymentMethod,
+    });
+
+    cartExist.products = [];
+    cartExist.totalPrice = 0;
+    await cartExist.save();
+
+    return res.status(201).json({
+      message: "Order created successfully",
+      data,
+    });
+  } catch (error) {
+    if (decrementedProducts.length) {
+      await Promise.all(
+        decrementedProducts.map((item) =>
+          Product.findByIdAndUpdate(item.productId, {
+            $inc: { stock: item.quantity },
+          }),
+        ),
+      );
+    }
+
+    return next(error);
+  }
 };
 
 //Get All Orders
 export const getAllOrders = async (req, res, next) => {
   const orders = await Order.find().populate({
-    path: "cartId",
-    select: "products",
-    populate: {
-      path: "products.productId",
-      select: "name",
-    },
+    path: "products.productId",
+    select: "name",
   });
   if (!orders.length) {
     const error = appError.create("No Orders found.", 404, httpStatus.ERROR);
@@ -73,12 +115,8 @@ export const getOrderById = async (req, res, next) => {
     return next(error);
   }
   const orderExist = await Order.findById(id).populate({
-    path: "cartId",
-    select: "-_id products",
-    populate: {
-      path: "products.productId",
-      select: "name",
-    },
+    path: "products.productId",
+    select: "name",
   });
   if (!orderExist) {
     const error = appError.create("Order not found.", 404, httpStatus.ERROR);
@@ -101,12 +139,8 @@ export const getOrdersByUser = async (req, res, next) => {
     return next(error);
   }
   const userOrders = await Order.find({ userId: userid }).populate({
-    path: "cartId",
-    select: "products",
-    populate: {
-      path: "products.productId",
-      select: "name",
-    },
+    path: "products.productId",
+    select: "name",
   });
   if (!userOrders.length) {
     const error = appError.create(
