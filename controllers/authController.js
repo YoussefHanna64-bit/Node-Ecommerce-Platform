@@ -48,8 +48,8 @@ export const loginUser = asyncWrapper(async (req, res, next) => {
 });
 
 export const registerUser = asyncWrapper(async (req, res, next) => {
-  const { firstName, lastName, age, email, password, role } = req.body;
-  if (!firstName || !lastName || !age || !email || !password) {
+  const { firstName, lastName, phoneNumber, email, password, role } = req.body;
+  if (!firstName || !lastName || !phoneNumber || !email || !password) {
     const error = appError.create(
       "Please enter the missing fields",
       404,
@@ -70,7 +70,7 @@ export const registerUser = asyncWrapper(async (req, res, next) => {
   const newUser = await User.create({
     firstName,
     lastName,
-    age,
+    phoneNumber,
     email,
     password: hashedPass,
     role,
