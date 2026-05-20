@@ -3,10 +3,9 @@ import asyncWrapper from "../middlewares/asyncWrapper.js";
 import httpStatus from "../utils/httpStatus.js";
 import appError from "../utils/appError.js";
 
-
 export const createPaymentIntent = asyncWrapper(async (req, res, next) => {
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-    
+
     const { amount } = req.body;
 
     if (!amount) {
@@ -27,13 +26,16 @@ export const createPaymentIntent = asyncWrapper(async (req, res, next) => {
         return next(error);
     }
 
+    const amountInCents = Math.round(amount * 100);
+
     const paymentIntent = await stripe.paymentIntents.create({
-        amount: amount * 100,
+        amount: amountInCents,
         currency: "usd",
+
     });
 
     res.status(200).json({
         status: httpStatus.SUCCESS,
-        data: { client_secret: paymentIntent.client_secret },
+        clientSecret: paymentIntent.client_secret
     });
 });
