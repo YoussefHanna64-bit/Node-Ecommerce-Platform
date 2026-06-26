@@ -14,7 +14,7 @@ router.post("/", async (req, res) => {
     const userMessage = req.body.message;
 
     const completion = await openai.chat.completions.create({
-      model: "deepseek/deepseek-chat",
+      model: "openrouter/auto",
       messages: [
         {
           role: "system",
